@@ -27,6 +27,10 @@ app.post('/flush/', async function(req, res){
     res.sendStatus(200);
 })
 
+app.get('/', function(req, res){
+    res.send('Cache-kun gommene!');
+});
+
 // Initialize our server
 app.listen(app.get("port"), err => {
   // If something goes wrong when initializing the server
