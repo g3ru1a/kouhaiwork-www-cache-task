@@ -7,7 +7,7 @@ const cron = require("node-cron");
 const axios = require("axios");
 
 const app = express();
-const redisClient = await connectRedis();
+const redisClient = connectRedis();
 let seriesToClear = [];
 
 // Set  our default port
