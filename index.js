@@ -7,7 +7,6 @@ const cron = require("node-cron");
 const axios = require("axios");
 
 const app = express();
-const redisClient = connectRedis();
 let seriesToClear = [];
 
 // Set  our default port
@@ -39,22 +38,27 @@ app.get("/", function (req, res) {
 cron.schedule("*/5 * * * *", async () => {
     console.log("[" + new Date().toUTCString() + "] " + "Cron job");
     if (seriesToClear.length > 0) {
+        let redisClient = await connectRedis();
 
         for (let i = 0; i < seriesToClear.length; i++) {
             let s = seriesToClear[i].id;
             console.log("[" + new Date().toUTCString() + "] " + "Checking series-" + s + " chapter-" + seriesToClear[i].chapter);
-            await axios.get(process.env.API_URL+'chapter/check/'+seriesToClear[i].chapter).then( async res => {
-                if(res.data.message){
-                    seriesToClear[i].tries++;
-                    return;
-                }else {
-                    if(res.data.uploaded == 1){
-                        await redisClient.del("series-" + s);
-                        seriesToClear[i].cleared = true;
+            try {
+                await axios.get(process.env.API_URL + "chapter/check/" + seriesToClear[i].chapter).then(async (res) => {
+                    if (res.data.message) {
+                        seriesToClear[i].tries++;
+                        return;
+                    } else {
+                        if (res.data.uploaded == 1) {
+                            await redisClient.del("series-" + s);
+                            seriesToClear[i].cleared = true;
+                        }
+                        seriesToClear[i].tries++;
                     }
-                    seriesToClear[i].tries++;
-                }
-            });
+                });
+            } catch (error) {
+                console.error(error);
+            }
             if(seriesToClear[i].tries === 3){
                 seriesToClear[i].cleared = true;
             }
